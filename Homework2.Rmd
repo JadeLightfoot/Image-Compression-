@@ -1,0 +1,439 @@
+---
+title: "Homework 2 Data Products"
+author: "Jade Lightfoot"
+date: "2026-09-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE}
+# Libraries and images readings in
+library(readr)
+
+image1 <- read_csv("/Users/jadelightfoot/Downloads/Jade Lightfoot Website/HW2imagefiles/image1.csv")
+image2 <- read_csv("/Users/jadelightfoot/Downloads/Jade Lightfoot Website/HW2imagefiles/image2.csv")
+image3 <- read_csv("/Users/jadelightfoot/Downloads/Jade Lightfoot Website/HW2imagefiles/image3.csv")
+image4 <- read_csv("/Users/jadelightfoot/Downloads/Jade Lightfoot Website/HW2imagefiles/image4.csv")
+```
+
+```{r}
+# turning into data matrix
+image1 <- data.matrix(image1)
+image2 <- data.matrix(image2)
+image3 <- data.matrix(image3)
+image4 <- data.matrix(image4)
+```
+
+## IMAGE COMPRESSION FUNCTION
+
+```{r}
+# IMAGE COMPRESSION FUNCTION 
+
+pca_compress <- function(X, k) {
+  # 1. Store column means and center the image matrix
+  col_means <- colMeans(X)
+  X_centered <- sweep(X, 2, col_means, "-")
+  
+  # 2. Compute V = X_centered' * X_centered
+  V <- t(X_centered) %*% X_centered
+  
+  # 3. Eigendecomposition of V
+  eig <- eigen(V)
+  ord <- order(eig$values, decreasing = TRUE)
+  U <- eig$vectors[, ord]
+  
+  # 4. Extract top k eigenvectors & PC scores
+  U_k <- U[, 1:k, drop = FALSE]
+  Z_k <- X_centered %*% U_k
+  
+  # 5. Reconstruct centered matrix and ADD column means back
+  X_k_centered <- Z_k %*% t(U_k)
+  X_k <- sweep(X_k_centered, 2, col_means, "+")
+  
+  # 6. Compute Frobenius norm reconstruction error against original X
+  err <- norm(X - X_k, type = "F")
+  
+  return(list(
+    X_k   = X_k,
+    error = err,
+    u1    = U[, 1],    # First eigenvector of centered V
+    z1    = Z_k[, 1]   # First PC score
+  ))
+}
+```
+
+# IMAGES PLOTS
+
+
+## IMAGE 1 
+```{r}
+#RANGE
+lim1 <- range(image1)
+p1 <- ncol(image1)
+
+# 1. Original image and first 10 PCA approximations (k = 1 THROUGH 10)
+par(mfrow = c(3, 4), mar = c(1, 1, 2, 1))
+
+# Original image
+image(t(image1[nrow(image1):1, ]), col = gray.colors(256), axes = FALSE, main = "Original", zlim = lim1)
+
+# k = 1 to 10 for image 1 
+res1_k1  <- pca_compress(image1, 1)
+image(t(res1_k1$X_k[nrow(res1_k1$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 1", zlim = lim1)
+
+res1_k2  <- pca_compress(image1, 2)
+image(t(res1_k2$X_k[nrow(res1_k2$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 2", zlim = lim1)
+
+res1_k3  <- pca_compress(image1, 3)
+image(t(res1_k3$X_k[nrow(res1_k3$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 3", zlim = lim1)
+
+res1_k4  <- pca_compress(image1, 4)
+image(t(res1_k4$X_k[nrow(res1_k4$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 4", zlim = lim1)
+
+res1_k5  <- pca_compress(image1, 5)
+image(t(res1_k5$X_k[nrow(res1_k5$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 5", zlim = lim1)
+
+res1_k6  <- pca_compress(image1, 6)
+image(t(res1_k6$X_k[nrow(res1_k6$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 6", zlim = lim1)
+
+res1_k7  <- pca_compress(image1, 7)
+image(t(res1_k7$X_k[nrow(res1_k7$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 7", zlim = lim1)
+
+res1_k8  <- pca_compress(image1, 8)
+image(t(res1_k8$X_k[nrow(res1_k8$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 8", zlim = lim1)
+
+res1_k9  <- pca_compress(image1, 9)
+image(t(res1_k9$X_k[nrow(res1_k9$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 9", zlim = lim1)
+
+res1_k10 <- pca_compress(image1, 10)
+image(t(res1_k10$X_k[nrow(res1_k10$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 10", zlim = lim1)
+```
+
+```{r}
+# Plot of approximation error vs k (all possible values of k)
+
+p1 <- ncol(image1)
+
+# Calculate Frobenius norm error for each k from 1 to p1
+all_errors1 <- numeric(p1)
+for (k in 1:p1) {
+  all_errors1[k] <- pca_compress(image1, k)$error
+}
+
+# Plot Error vs. k
+par(mfrow = c(1, 1), mar = c(4.5, 4.5, 2, 1))
+plot(1:p1, all_errors1, type = "l", col = "blue", lwd = 2,
+     xlab = "k (Number of Principal Components)",
+     ylab = "Norm Error ||X - X^(k)||",
+     main = "Approximation Error vs. k (Image 1)")
+grid()
+```
+
+```{r}
+# First eigenvector and first pc score plotting 
+res1_full <- pca_compress(image1, 1)
+
+par(mfrow = c(1, 2), mar = c(4.5, 4.5, 2.5, 1))
+
+# First Eigenvector (u1) Plot
+plot(res1_full$u1, type = "l", col = "red", lwd = 2,
+     xlab = "Column Index", ylab = "Value",
+     main = "First Eigenvector (u1)")
+grid()
+
+# First PC Score (z1) Plot
+plot(res1_full$z1, type = "l", col = "darkgreen", lwd = 2,
+     xlab = "Row Index", ylab = "Value",
+     main = "First PC Score (z1)")
+grid()
+
+```
+
+Based on the plots k=1 is sufficnet enough to render the vertical stripe feature in image 1. K= 15 to 20 also provides a good approximation reducing data dimensionality. 
+
+## IMAGE 2 
+```{r}
+# RANGE
+lim2 <- range(image2)
+p2 <- ncol(image2)
+
+# 1. Original image and first 10 PCA approximations (k = 1 THROUGH 10)
+par(mfrow = c(3, 4), mar = c(1, 1, 2, 1))
+
+# Original image
+image(t(image2[nrow(image2):1, ]), col = gray.colors(256), axes = FALSE, main = "Original", zlim = lim2)
+
+# k = 1 to 10 for image 2
+res2_k1  <- pca_compress(image2, 1)
+image(t(res2_k1$X_k[nrow(res2_k1$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 1", zlim = lim2)
+
+res2_k2  <- pca_compress(image2, 2)
+image(t(res2_k2$X_k[nrow(res2_k2$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 2", zlim = lim2)
+
+res2_k3  <- pca_compress(image2, 3)
+image(t(res2_k3$X_k[nrow(res2_k3$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 3", zlim = lim2)
+
+res2_k4  <- pca_compress(image2, 4)
+image(t(res2_k4$X_k[nrow(res2_k4$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 4", zlim = lim2)
+
+res2_k5  <- pca_compress(image2, 5)
+image(t(res2_k5$X_k[nrow(res2_k5$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 5", zlim = lim2)
+
+res2_k6  <- pca_compress(image2, 6)
+image(t(res2_k6$X_k[nrow(res2_k6$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 6", zlim = lim2)
+
+res2_k7  <- pca_compress(image2, 7)
+image(t(res2_k7$X_k[nrow(res2_k7$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 7", zlim = lim2)
+
+res2_k8  <- pca_compress(image2, 8)
+image(t(res2_k8$X_k[nrow(res2_k8$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 8", zlim = lim2)
+
+res2_k9  <- pca_compress(image2, 9)
+image(t(res2_k9$X_k[nrow(res2_k9$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 9", zlim = lim2)
+
+res2_k10 <- pca_compress(image2, 10)
+image(t(res2_k10$X_k[nrow(res2_k10$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 10", zlim = lim2)
+```
+
+```{r}
+# Plot of approximation error vs k (all possible values of k)
+p2 <- ncol(image2)
+
+all_errors2 <- numeric(p2)
+for (k in 1:p2) {
+  all_errors2[k] <- pca_compress(image2, k)$error
+}
+
+# Plot Error vs. k for Image 2
+par(mfrow = c(1, 1), mar = c(4.5, 4.5, 2, 1))
+plot(1:p2, all_errors2, type = "l", col = "blue", lwd = 2,
+     xlab = "k (Number of Principal Components)",
+     ylab = "Norm Error ||X - X^(k)||",
+     main = "Approximation Error vs. k (Image 2)")
+grid()
+
+
+```
+
+```{r}
+res2_full <- pca_compress(image2, 1)
+
+par(mfrow = c(1, 2), mar = c(4.5, 4.5, 2.5, 1))
+
+# First Eigenvector (u1) Plot
+plot(res2_full$u1, type = "l", col = "red", lwd = 2,
+     xlab = "Column Index", ylab = "Value",
+     main = "First Eigenvector (u1)")
+grid()
+
+# First PC Score (z1) Plot
+plot(res2_full$z1, type = "l", col = "darkgreen", lwd = 2,
+     xlab = "Row Index", ylab = "Value",
+     main = "First PC Score (z1)")
+grid()
+
+```
+
+The k value k= 1 is enough, becuase it captures the image of horrizontal lines and the gradient. 
+
+
+## IMAGE 3 
+
+```{r}
+# RANGE
+lim3 <- range(image3)
+p3 <- ncol(image3)
+
+# 1. Original image and first 10 PCA approximations (k = 1 THROUGH 10)
+par(mfrow = c(3, 4), mar = c(1, 1, 2, 1))
+
+# Original image
+image(t(image3[nrow(image3):1, ]), col = gray.colors(256), axes = FALSE, main = "Original", zlim = lim3)
+
+# k = 1 to 10 for image 3
+res3_k1  <- pca_compress(image3, 1)
+image(t(res3_k1$X_k[nrow(res3_k1$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 1", zlim = lim3)
+
+res3_k2  <- pca_compress(image3, 2)
+image(t(res3_k2$X_k[nrow(res3_k2$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 2", zlim = lim3)
+
+res3_k3  <- pca_compress(image3, 3)
+image(t(res3_k3$X_k[nrow(res3_k3$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 3", zlim = lim3)
+
+res3_k4  <- pca_compress(image3, 4)
+image(t(res3_k4$X_k[nrow(res3_k4$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 4", zlim = lim3)
+
+res3_k5  <- pca_compress(image3, 5)
+image(t(res3_k5$X_k[nrow(res3_k5$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 5", zlim = lim3)
+
+res3_k6  <- pca_compress(image3, 6)
+image(t(res3_k6$X_k[nrow(res3_k6$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 6", zlim = lim3)
+
+res3_k7  <- pca_compress(image3, 7)
+image(t(res3_k7$X_k[nrow(res3_k7$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 7", zlim = lim3)
+
+res3_k8  <- pca_compress(image3, 8)
+image(t(res3_k8$X_k[nrow(res3_k8$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 8", zlim = lim3)
+
+res3_k9  <- pca_compress(image3, 9)
+image(t(res3_k9$X_k[nrow(res3_k9$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 9", zlim = lim3)
+
+res3_k10 <- pca_compress(image3, 10)
+image(t(res3_k10$X_k[nrow(res3_k10$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 10", zlim = lim3)
+
+```
+
+```{r}
+p3 <- ncol(image3)
+all_errors3 <- numeric(p3)
+
+col_means3 <- colMeans(image3)
+X3_centered <- sweep(image3, 2, col_means3, "-")
+
+V3 <- t(X3_centered) %*% X3_centered
+eig3 <- eigen(V3)
+ord3 <- order(eig3$values, decreasing = TRUE)
+U3 <- eig3$vectors[, ord3]
+
+for (k in 1:p3) {
+  U_k <- U3[, 1:k, drop = FALSE]
+  Z_k <- X3_centered %*% U_k
+  X_k_centered <- Z_k %*% t(U_k)
+  
+  all_errors3[k] <- norm(X3_centered - X_k_centered, type = "F")
+}
+
+# Plot Error vs. k
+par(mfrow = c(1, 1), mar = c(4.5, 4.5, 2, 1))
+plot(1:p3, all_errors3, type = "l", col = "blue", lwd = 2,
+     xlab = "k (Number of Principal Components)",
+     ylab = "Norm Error ||X - X^(k)||",
+     main = "Approximation Error vs. k (Image 3)")
+grid()
+```
+
+```{r}
+res3_full <- pca_compress(image3, 1)
+
+par(mfrow = c(1, 2), mar = c(4.5, 4.5, 2.5, 1))
+
+# First Eigenvector (u1)
+plot(res3_full$u1, type = "l", col = "red", lwd = 2,
+     xlab = "Column Index", ylab = "Value",
+     main = "First Eigenvector (u1)")
+grid()
+
+# First PC Score (z1)
+plot(res3_full$z1, type = "l", col = "darkgreen", lwd = 2,
+     xlab = "Row Index", ylab = "Value",
+     main = "First PC Score (z1)")
+grid()
+```
+
+For the most recognizable outling k= 5 to 10 is clear enouhg to identify the shape of the puppy's head. for a more detailed image a higher k value is recommended. k=30 to 50 based on the plot of apporximation error. 
+
+## IMAGE 4 
+
+```{r}
+# RANGE
+lim4 <- range(image4)
+p4 <- ncol(image4)
+
+# 1. Original image and first 10 PCA approximations (k = 1 THROUGH 10)
+par(mfrow = c(3, 4), mar = c(1, 1, 2, 1))
+
+# Original image
+image(t(image4[nrow(image4):1, ]), col = gray.colors(256), axes = FALSE, main = "Original", zlim = lim4)
+
+# k = 1 to 10 for image 4
+res4_k1  <- pca_compress(image4, 1)
+image(t(res4_k1$X_k[nrow(res4_k1$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 1", zlim = lim4)
+
+res4_k2  <- pca_compress(image4, 2)
+image(t(res4_k2$X_k[nrow(res4_k2$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 2", zlim = lim4)
+
+res4_k3  <- pca_compress(image4, 3)
+image(t(res4_k3$X_k[nrow(res4_k3$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 3", zlim = lim4)
+
+res4_k4  <- pca_compress(image4, 4)
+image(t(res4_k4$X_k[nrow(res4_k4$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 4", zlim = lim4)
+
+res4_k5  <- pca_compress(image4, 5)
+image(t(res4_k5$X_k[nrow(res4_k5$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 5", zlim = lim4)
+
+res4_k6  <- pca_compress(image4, 6)
+image(t(res4_k6$X_k[nrow(res4_k6$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 6", zlim = lim4)
+
+res4_k7  <- pca_compress(image4, 7)
+image(t(res4_k7$X_k[nrow(res4_k7$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 7", zlim = lim4)
+
+res4_k8  <- pca_compress(image4, 8)
+image(t(res4_k8$X_k[nrow(res4_k8$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 8", zlim = lim4)
+
+res4_k9  <- pca_compress(image4, 9)
+image(t(res4_k9$X_k[nrow(res4_k9$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 9", zlim = lim4)
+
+res4_k10 <- pca_compress(image4, 10)
+image(t(res4_k10$X_k[nrow(res4_k10$X_k):1, ]), col = gray.colors(256), axes = FALSE, main = "k = 10", zlim = lim4)
+```
+
+
+```{r}
+# Plot of Approximation Error vs. k for ALL possible values of k
+all_errors4 <- numeric(p4)
+
+col_means4 <- colMeans(image4)
+X4_centered <- sweep(image4, 2, col_means4, "-")
+
+V4 <- t(X4_centered) %*% X4_centered
+eig4 <- eigen(V4)
+ord4 <- order(eig4$values, decreasing = TRUE)
+U4 <- eig4$vectors[, ord4]
+
+for (k in 1:p4) {
+  U_k <- U4[, 1:k, drop = FALSE]
+  Z_k <- X4_centered %*% U_k
+  X_k_centered <- Z_k %*% t(U_k)
+  
+  all_errors4[k] <- norm(X4_centered - X_k_centered, type = "F")
+}
+
+# Plot Error vs. k
+par(mfrow = c(1, 1), mar = c(4.5, 4.5, 2, 1))
+plot(1:p4, all_errors4, type = "l", col = "blue", lwd = 2,
+     xlab = "k (Number of Principal Components)",
+     ylab = "Frobenius Norm Error ||X - X^(k)||",
+     main = "Approximation Error vs. k (Image 4)")
+grid()
+
+```
+
+
+```{r}
+#Plot of First Eigenvector (u1) and First PC Score (z1)
+res4_full <- pca_compress(image4, 1)
+
+par(mfrow = c(1, 2), mar = c(4.5, 4.5, 2.5, 1))
+
+# First Eigenvector (u1) Plot
+plot(res4_full$u1, type = "l", col = "red", lwd = 2,
+     xlab = "Column Index", ylab = "Value",
+     main = "First Eigenvector (u1)")
+grid()
+
+# First PC Score (z1) Plot
+plot(res4_full$z1, type = "l", col = "darkgreen", lwd = 2,
+     xlab = "Row Index", ylab = "Value",
+     main = "First PC Score (z1)")
+grid()
+```
+
+For the main strutre of the image k = 5 to 10 does fine. k =1 only the central block of the image is visible, but by k = 5 through 10 the background of the image becomes more clear. based on the error curve the best k value would be k= 15 throuhg 25 for a more detailed image. 
+
+
+
+
+
