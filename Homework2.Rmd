@@ -13,10 +13,10 @@ knitr::opts_chunk$set(echo = TRUE)
 # Libraries and images readings in
 library(readr)
 
-image1 <- read_csv("/Users/jadelightfoot/Downloads/Jade Lightfoot Website/HW2imagefiles/image1.csv")
-image2 <- read_csv("/Users/jadelightfoot/Downloads/Jade Lightfoot Website/HW2imagefiles/image2.csv")
-image3 <- read_csv("/Users/jadelightfoot/Downloads/Jade Lightfoot Website/HW2imagefiles/image3.csv")
-image4 <- read_csv("/Users/jadelightfoot/Downloads/Jade Lightfoot Website/HW2imagefiles/image4.csv")
+image1 <- read_csv("/Users/jadelightfoot/Downloads/Homework2DP/image1.csv")
+image2 <- read_csv("/Users/jadelightfoot/Downloads/Homework2DP/image2.csv")
+image3 <- read_csv("/Users/jadelightfoot/Downloads/Homework2DP/image3.csv")
+image4 <- read_csv("/Users/jadelightfoot/Downloads/Homework2DP/image4.csv")
 ```
 
 ```{r}
